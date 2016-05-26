@@ -25,6 +25,7 @@ def main():
 	settings = Settings(config_file)
 
 	# read in data
+	revenue = Revenue(settings.data_settings)
 
 	# process data
 
@@ -35,12 +36,20 @@ def main():
 
 
 
+class Revenue:
+	def __init__(self, settings):
+		self.fixed_costs = read_file(settings.fixed_costs_file)
+		self.variable_costs = read_file(settings.variable_costs_file)
+		self.income = read_file(settings.income_file)
+
+
+
 class Settings:
 	def __init__(self, config_file):
 		config = configparser.ConfigParser()
 		config.read(config_file)
-		self.plot = self.get_section_settings(config, 'plot')
-		self.data = self.get_section_settings(config, 'data')
+		self.plot_settings = self.get_section_settings(config, 'plot')
+		self.data_settings = self.get_section_settings(config, 'data')
 
 
 	def get_section_settings(self, config, section):
