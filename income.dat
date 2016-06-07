@@ -1,4 +1,4 @@
-#Income                   Per_Num_Months     Per_Num_Customers  Conservative       Estimate        Aggressive
+#Income              Per_N_Months  Per_N_Customers  Conservative  Estimate  Aggressive
 
-Internet_Connection       1.0                1                  50.00              75.00           150.00
-Router_Rental             1.0                1                  5.00               10.00           15.00
+Internet_Connection  1.0           1                50.00         75.00     150.00
+Router_Rental        1.0           1                5.00          10.00     15.00
