@@ -36,11 +36,50 @@ def main():
 
 
 
+def read_files(files, header_line=None, comment_char='#', rec_array=False):
+	header = None
+	data = None
+	if type(files) == str:
+		files = [files]
+
+	if header_line != None:
+		with open(files[0], 'r') as fd:
+			for line in range(header_line):
+				fd.readline()
+			header = fd.readline()
+		if header[0] != comment_char:
+			print "Header must start with a '%s'." % comment_char
+			sys.exit(4)
+		header = header[1:]
+		header = header.split()
+
+	for file in files:
+		print "Reading file%s..." % (file)
+		if data == None:
+			if rec_array:
+				data = np.genfromtxt(file, dtype=None, comments=comment_char, names=header, deletechars='[]/|')
+				data = data.view(np.recarray)
+			else:
+				data = np.genfromtxt(file, dtype=None, comments=comment_char)
+		else:
+			if rec_array:
+				data = np.append(data, np.genfromtxt(file, dtype=None, comments=comment_char, names=header, deletechars='[]/|'), axis=0)
+				data = data.view(np.recarray)
+			else:
+				data = np.append(data, np.genfromtxt(file, dtype=None, comments=comment_char), axis=0)
+
+	if header_line == None:
+		return data
+	else:
+		return header, data
+
+
+
 class Revenue:
 	def __init__(self, settings):
-		self.fixed_costs = read_file(settings.fixed_costs_file)
-		self.variable_costs = read_file(settings.variable_costs_file)
-		self.income = read_file(settings.income_file)
+		self.fixed_costs = read_files(settings.fixed_costs_file)
+		self.variable_costs = read_files(settings.variable_costs_file)
+		self.income = read_files(settings.income_file)
 
 
 
