@@ -20,7 +20,7 @@ def main():
 
 	# get arguments/filenames
 	config_file = 'settings.conf'
-	if len(sys.argv > 1):
+	if len(sys.argv) > 1:
 		config_file = sys.argv[1]
 
 	# read config file
@@ -30,10 +30,10 @@ def main():
 	revenue = Revenue(settings.data_settings)
 
 	# process data
-	set_trace()
+	#set_trace()
 
 	# generate plots
-	make_plots(revenue)
+	make_plots(revenue, settings.plot_settings)
 
 	print("Finished.")
 	sys.exit()
@@ -52,61 +52,59 @@ class Revenue:
 
 
 	def net(self, months, customers, estimate_type='estimate'):
-		net = gross_income(months, customers, estimate_type) - expenses(months, customers, estimate_type)
+		net = self.gross_income(months, customers, estimate_type) - self.expenses(months, customers, estimate_type)
 		return net
 
 
 	def gross_income(self, months, customers, estimate_type):
 		if estimate_type == 'estimate':
-			income = self.income.estimate
+			income = self.income.estimate[:, np.newaxis]
 		elif estimate_type == 'conservative':
-			income = self.income.conservative
-		elif estimate_type = 'aggressive':
-			income = self.income.aggressive
+			income = self.income.conservative[:, np.newaxis]
+		elif estimate_type == 'aggressive':
+			income = self.income.aggressive[:, np.newaxis]
 
-		month_rate = self.income.month_rate
-		customer_rate = self.income.customer_rate
+		month_rate = self.income.month_rate[:, np.newaxis]
+		customer_rate = self.income.customer_rate[:, np.newaxis]
 
-		line_income = income * (months / month_rate) * np.floor(customers / customer_rate)
-		gross_income = np.sum(line_income)
+		line_income = income * np.divide(months, month_rate) * np.floor(np.divide(customers, customer_rate))
+		gross_income = np.sum(line_income, axis=0)
 		return gross_income
 
 
 	def expenses(self, months, customers, estimate_type):
-		expenses = fixed_expenses(months, estimate_type) + variable_expenses(months, customers, estimate_type)
+		expenses = self.fixed_expenses(months, estimate_type) + self.variable_expenses(months, customers, estimate_type)
 		return expenses
 
 
 	def fixed_expenses(self, months, estimate_type):
 		if estimate_type == 'estimate':
-			fixed_costs = self.fixed_costs.estimate
+			fixed_costs = self.fixed_costs.estimate[:, np.newaxis]
 		elif estimate_type == 'conservative':
-			fixed_costs = self.fixed_costs.conservative
-		elif estimate_type = 'aggressive':
-			fixed_costs = self.fixed_costs.aggressive
+			fixed_costs = self.fixed_costs.conservative[:, np.newaxis]
+		elif estimate_type == 'aggressive':
+			fixed_costs = self.fixed_costs.aggressive[:, np.newaxis]
 
-		month_rate = self.fixed_costs.month_rate
+		month_rate = self.fixed_costs.month_rate[:, np.newaxis]
 
 		line_costs = fixed_costs * (months / month_rate)
-		expenses = np.sum(line_costs)
-
+		expenses = np.sum(line_costs, axis=0)
 		return expenses
 
 
 	def variable_expenses(self, months, customers, estimate_type):
 		if estimate_type == 'estimate':
-			variable_costs = self.variable_costs.estimate
+			variable_costs = self.variable_costs.estimate[:, np.newaxis]
 		elif estimate_type == 'conservative':
-			variable_costs = self.variable_costs.conservative
-		elif estimate_type = 'aggressive':
-			variable_costs = self.variable_costs.aggressive
+			variable_costs = self.variable_costs.conservative[:, np.newaxis]
+		elif estimate_type == 'aggressive':
+			variable_costs = self.variable_costs.aggressive[:, np.newaxis]
 
-		month_rate = self.variable_costs.month_rate
-		customer_rate = self.variable_costs.customer_rate
+		month_rate = self.variable_costs.month_rate[:, np.newaxis]
+		customer_rate = self.variable_costs.customer_rate[:, np.newaxis]
 
 		line_costs = variable_costs * (months / month_rate) * np.floor(customers / customer_rate)
-		expenses = np.sum(line_costs)
-
+		expenses = np.sum(line_costs, axis=0)
 		return expenses
 
 
@@ -173,9 +171,9 @@ def read_files(files, header_line=None, comment_char='#', rec_array=False, field
 
 
 def make_plots(revenue, settings):
-	fig = make_time_plot(revenue)
-	fig = make_customer_plot(revenue)
-	fig = make_customer_time_plot(revenue)
+	fig = make_time_plot(revenue, settings)
+	fig = make_customer_plot(revenue, settings)
+	fig = make_customer_time_plot(revenue, settings)
 
 
 
@@ -189,6 +187,10 @@ def make_time_plot(revenue, settings):
 
 def make_customer_plot(revenue, settings):
 	fig, ax = setup_plot()
+	customers = np.linspace(0, 1000000, num=200)
+	net_income = revenue.net(12., customers)
+	ax = make_line_plot(ax, customers, net_income)
+	plot_name = 'plots/test.eps'
 	fig = save_plot(fig, plot_name)
 	return fig
 
@@ -204,7 +206,7 @@ def make_customer_time_plot(revenue, settings):
 def setup_plot():
 	print('Making plot...')
 	fig = plt.figure(figsize = (9.0, 6.0))
-	ax = fig.add_subplot(111, aspect='equal')
+	ax = fig.add_subplot(111)
 	return fig, ax
 
 
@@ -218,7 +220,8 @@ def save_plot(fig, name):
 
 
 def make_line_plot(ax, x_data, y_data, xlim=None, ylim=None):
-	pass
+	ax.plot(x_data, y_data, linestyle='-')
+	return ax
 
 
 
