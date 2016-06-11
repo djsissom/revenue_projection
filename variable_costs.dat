@@ -1,5 +1,7 @@
-#Cost          Per_N_Months  Per_N_Customers  Conservative  Estimate  Aggressive
+#Cost           Per_N_Months  Per_N_Customers  Conservative  Estimate   Aggressive
 
-Bandwidth      1.0           1                5.00          10.00     30.00
-Router_Rental  1.0           1                5.00          10.00     15.00
-Tower          1.0           10000            1000.00       2000.00   3000.00
+Bandwidth       1.0           1                5.00          10.00      30.00
+Router_Rental   1.0           1                5.00          10.00      15.00
+Tower           1.0           1000             2000.00       3000.00    5000.00
+Officer_Salary  1.0           10000            200000.00     100000.00  50000.00
+Tech_Salary     1.0           5000             100000.00     75000.00   50000.00
