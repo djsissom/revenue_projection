@@ -171,9 +171,9 @@ def read_files(files, header_line=None, comment_char='#', rec_array=False, field
 
 
 def make_plots(revenue, settings):
-	fig = make_time_plot(revenue, settings)
+	#fig = make_time_plot(revenue, settings)
 	fig = make_customer_plot(revenue, settings)
-	fig = make_customer_time_plot(revenue, settings)
+	#fig = make_customer_time_plot(revenue, settings)
 
 
 
@@ -186,12 +186,14 @@ def make_time_plot(revenue, settings):
 
 
 def make_customer_plot(revenue, settings):
-	fig, ax = setup_plot()
-	customers = np.linspace(0, 1000000, num=200)
+	fig, ax = setup_plot(settings)
+	customers = np.logspace(1, 5, num=200)
 	net_income = revenue.net(12., customers)
-	ax = make_line_plot(ax, customers, net_income)
+	ax = make_line_plot(ax, customers, net_income, settings)
+	ax.set_xscale('log')
+	ax.set_yscale('log')
 	plot_name = 'plots/test.eps'
-	fig = save_plot(fig, plot_name)
+	fig = save_plot(fig, plot_name, settings)
 	return fig
 
 
@@ -203,7 +205,7 @@ def make_customer_time_plot(revenue, settings):
 
 
 
-def setup_plot():
+def setup_plot(settings):
 	print('Making plot...')
 	fig = plt.figure(figsize = (9.0, 6.0))
 	ax = fig.add_subplot(111)
@@ -211,7 +213,7 @@ def setup_plot():
 
 
 
-def save_plot(fig, name):
+def save_plot(fig, name, settings):
 	print('Saving %s plot.' % name)
 	fig.tight_layout()
 	plt.savefig(name, bbox_inches='tight')
@@ -219,7 +221,7 @@ def save_plot(fig, name):
 
 
 
-def make_line_plot(ax, x_data, y_data, xlim=None, ylim=None):
+def make_line_plot(ax, x_data, y_data, settings, xlim=None, ylim=None):
 	ax.plot(x_data, y_data, linestyle='-')
 	return ax
 
