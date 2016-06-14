@@ -118,12 +118,33 @@ class Settings:
 
 	def get_section_settings(self, config, section):
 		settings_list = config.items(section)
+		settings_list = [self.convert_type(x) for x in settings_list]
 		settings_dict = dict(settings_list)
 		keys = settings_dict.keys()
 		key_string = ' '.join(keys)
 		SettingsStruct = namedtuple('SettingsStruct', key_string)
 		settings = SettingsStruct(**settings_dict)
 		return settings
+
+
+	def convert_type(self, setting):
+		key = setting[0]
+		value = setting[1]
+		if type(value) == str:
+			if (value[0] == '"' and value[-1] == '"') or (value[0] == "'" and value[-1] == "'"):
+				value = value[1:-1]
+			elif value == 'True' or value == 'true':
+				value = True
+			elif value == 'False' or value == 'false':
+				value = False
+			elif '.' in value:
+				value = float(value)
+			else:
+				value = int(value)
+		else:
+			sys.exit(18235)
+
+		return (key, value)
 
 
 
@@ -171,13 +192,11 @@ def read_files(files, header_line=None, comment_char='#', rec_array=False, field
 
 def make_plots(revenue, settings):
 	if settings.time_plot_settings.make_plot:
-		pass
-		#fig = make_time_plot(revenue, settings.time_plot_settings)
+		fig = make_time_plot(revenue, settings.time_plot_settings)
 	if settings.customer_plot_settings.make_plot:
 		fig = make_customer_plot(revenue, settings.customer_plot_settings)
 	if settings.customer_time_plot_settings.make_plot:
-		pass
-		#fig = make_customer_time_plot(revenue, settings.customer_time_plot_settings)
+		fig = make_customer_time_plot(revenue, settings.customer_time_plot_settings)
 
 
 
@@ -193,7 +212,7 @@ def make_customer_plot(revenue, settings):
 	fig, ax = setup_plot(settings)
 
 	customers = get_independent_variable(settings)
-	net_income = revenue.net(float(settings.time_slice), customers)
+	net_income = revenue.net(settings.time_slice, customers)
 
 	ax = make_line_plot(ax, customers, net_income, settings)
 	ax = set_line_plot_params(ax, settings)
@@ -235,13 +254,10 @@ def make_line_plot(ax, x_data, y_data, settings, xlim=None, ylim=None):
 
 
 def get_independent_variable(settings):
-	x_start = float(settings.x_start)
-	x_stop = float(settings.x_stop)
-	npoints = float(settings.npoints)
 	if settings.x_log:
-		x = np.logspace(x_start, x_stop, num=npoints)
+		x = np.logspace(settings.x_start, settings.x_stop, num=settings.npoints)
 	else:
-		x = np.linspace(x_start, x_stop, num=npoints)
+		x = np.linspace(settings.x_start, settings.x_stop, num=settings.npoints)
 	return x
 
 
