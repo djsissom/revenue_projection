@@ -204,7 +204,19 @@ def make_plots(revenue, settings):
 
 def make_time_plot(revenue, settings):
 	fig, ax = setup_plot(settings)
-	fig = save_plot(fig, plot_name)
+
+	months = get_independent_variable(settings)
+	net_income = revenue.net(months, settings.customers_slice)
+	net_income_conservative = revenue.net(months, settings.customers_slice, estimate_type='conservative')
+	net_income_aggressive = revenue.net(months, settings.customers_slice, estimate_type='aggressive')
+
+	lines = ax.fill_between(months, net_income_conservative, net_income_aggressive, facecolor='0.8')
+	line = ax.plot(months, net_income, linestyle='-')
+	set_line_plot_params(ax, settings)
+
+	ax.text(0.95, 0.10, '50,000 Customers', horizontalalignment='right', verticalalignment='center', transform=ax.transAxes)
+
+	fig = save_plot(fig, settings)
 	return fig
 
 
