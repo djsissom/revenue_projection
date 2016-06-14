@@ -137,6 +137,8 @@ class Settings:
 				value = True
 			elif value == 'False' or value == 'false':
 				value = False
+			elif value == 'None' or value == 'none':
+				value = None
 			elif '.' in value:
 				value = float(value)
 			else:
@@ -202,7 +204,6 @@ def make_plots(revenue, settings):
 
 def make_time_plot(revenue, settings):
 	fig, ax = setup_plot(settings)
-	ax = make_line_plot(ax, x_data, y_data)
 	fig = save_plot(fig, plot_name)
 	return fig
 
@@ -213,9 +214,12 @@ def make_customer_plot(revenue, settings):
 
 	customers = get_independent_variable(settings)
 	net_income = revenue.net(settings.time_slice, customers)
+	net_income_conservative = revenue.net(settings.time_slice, customers, estimate_type='conservative')
+	net_income_aggressive = revenue.net(settings.time_slice, customers, estimate_type='aggressive')
 
-	ax = make_line_plot(ax, customers, net_income, settings)
-	ax = set_line_plot_params(ax, settings)
+	lines = ax.fill_between(customers, net_income_conservative, net_income_aggressive, facecolor='0.8')
+	line = ax.plot(customers, net_income, linestyle='-')
+	set_line_plot_params(ax, settings)
 
 	fig = save_plot(fig, settings)
 	return fig
@@ -247,17 +251,11 @@ def save_plot(fig, settings):
 
 
 
-def make_line_plot(ax, x_data, y_data, settings, xlim=None, ylim=None):
-	ax.plot(x_data, y_data, linestyle='-')
-	return ax
-
-
-
 def get_independent_variable(settings):
 	if settings.x_log:
-		x = np.logspace(settings.x_start, settings.x_stop, num=settings.npoints)
+		x = np.logspace(settings.x_min, settings.x_max, num=settings.npoints)
 	else:
-		x = np.linspace(settings.x_start, settings.x_stop, num=settings.npoints)
+		x = np.linspace(settings.x_min, settings.x_max, num=settings.npoints)
 	return x
 
 
@@ -267,7 +265,13 @@ def set_line_plot_params(ax, settings):
 		ax.set_xscale('log')
 	if settings.y_log:
 		ax.set_yscale('log')
-	return ax
+
+	null_list = [None, 'None', 'none', 'Auto', 'auto']
+	if settings.y_min not in null_list and settings.y_max not in null_list:
+		ax.set_ylim(settings.y_min, settings.y_max)
+
+	ax.set_xlabel(settings.x_axis_label)
+	ax.set_ylabel(settings.y_axis_label)
 
 
 
