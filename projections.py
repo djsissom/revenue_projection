@@ -29,11 +29,8 @@ def main():
 	# read in data
 	revenue = Revenue(settings.data_settings)
 
-	# process data
-	#set_trace()
-
 	# generate plots
-	make_plots(revenue, settings.plot_settings)
+	make_plots(revenue, settings)
 
 	print("Finished.")
 	sys.exit()
@@ -113,8 +110,10 @@ class Settings:
 	def __init__(self, config_file):
 		config = configparser.ConfigParser()
 		config.read(config_file)
-		self.plot_settings = self.get_section_settings(config, 'plot')
 		self.data_settings = self.get_section_settings(config, 'data')
+		self.time_plot_settings = self.get_section_settings(config, 'time_plot')
+		self.customer_plot_settings = self.get_section_settings(config, 'customer_plot')
+		self.customer_time_plot_settings = self.get_section_settings(config, 'customer_time_plot')
 
 
 	def get_section_settings(self, config, section):
@@ -171,14 +170,19 @@ def read_files(files, header_line=None, comment_char='#', rec_array=False, field
 
 
 def make_plots(revenue, settings):
-	#fig = make_time_plot(revenue, settings)
-	fig = make_customer_plot(revenue, settings)
-	#fig = make_customer_time_plot(revenue, settings)
+	if settings.time_plot_settings.make_plot:
+		pass
+		#fig = make_time_plot(revenue, settings.time_plot_settings)
+	if settings.customer_plot_settings.make_plot:
+		fig = make_customer_plot(revenue, settings.customer_plot_settings)
+	if settings.customer_time_plot_settings.make_plot:
+		pass
+		#fig = make_customer_time_plot(revenue, settings.customer_time_plot_settings)
 
 
 
 def make_time_plot(revenue, settings):
-	fig, ax = setup_plot()
+	fig, ax = setup_plot(settings)
 	ax = make_line_plot(ax, x_data, y_data)
 	fig = save_plot(fig, plot_name)
 	return fig
@@ -187,19 +191,20 @@ def make_time_plot(revenue, settings):
 
 def make_customer_plot(revenue, settings):
 	fig, ax = setup_plot(settings)
-	customers = np.logspace(1, 5, num=200)
-	net_income = revenue.net(12., customers)
+
+	customers = get_independent_variable(settings)
+	net_income = revenue.net(float(settings.time_slice), customers)
+
 	ax = make_line_plot(ax, customers, net_income, settings)
-	ax.set_xscale('log')
-	ax.set_yscale('log')
-	plot_name = 'plots/test.eps'
-	fig = save_plot(fig, plot_name, settings)
+	ax = set_line_plot_params(ax, settings)
+
+	fig = save_plot(fig, settings)
 	return fig
 
 
 
 def make_customer_time_plot(revenue, settings):
-	fig, ax = setup_plot()
+	fig, ax = setup_plot(settings)
 	fig = save_plot(fig, plot_name)
 	return fig
 
@@ -213,9 +218,11 @@ def setup_plot(settings):
 
 
 
-def save_plot(fig, name, settings):
+def save_plot(fig, settings):
+	name = settings.plot_name
 	print('Saving %s plot.' % name)
-	fig.tight_layout()
+	if settings.set_tight_layout:
+		fig.tight_layout()
 	plt.savefig(name, bbox_inches='tight')
 	return fig
 
@@ -223,6 +230,27 @@ def save_plot(fig, name, settings):
 
 def make_line_plot(ax, x_data, y_data, settings, xlim=None, ylim=None):
 	ax.plot(x_data, y_data, linestyle='-')
+	return ax
+
+
+
+def get_independent_variable(settings):
+	x_start = float(settings.x_start)
+	x_stop = float(settings.x_stop)
+	npoints = float(settings.npoints)
+	if settings.x_log:
+		x = np.logspace(x_start, x_stop, num=npoints)
+	else:
+		x = np.linspace(x_start, x_stop, num=npoints)
+	return x
+
+
+
+def set_line_plot_params(ax, settings):
+	if settings.x_log:
+		ax.set_xscale('log')
+	if settings.y_log:
+		ax.set_yscale('log')
 	return ax
 
 
