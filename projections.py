@@ -206,18 +206,45 @@ def make_time_plot(revenue, settings):
 	fig, ax = setup_plot(settings)
 
 	months = get_independent_variable(settings)
-	net_income = revenue.net(months, settings.customers_slice)
-	net_income_conservative = revenue.net(months, settings.customers_slice, estimate_type='conservative')
-	net_income_aggressive = revenue.net(months, settings.customers_slice, estimate_type='aggressive')
-
-	lines = ax.fill_between(months, net_income_conservative, net_income_aggressive, facecolor='0.8')
-	line = ax.plot(months, net_income, linestyle='-')
+	for customer_function, line_color, fill_color in zip([constant_customers, linear_customers, exponential_customers], \
+			[settings.constant_line_color, settings.linear_line_color, settings.exponential_line_color], \
+			[settings.constant_fill_color, settings.linear_fill_color, settings.exponential_fill_color]):
+		line, range_lines = add_time_plot_lines(ax, months, revenue, customer_function, line_color, fill_color, settings)
 	set_line_plot_params(ax, settings)
 
 	ax.text(0.95, 0.10, '50,000 Customers', horizontalalignment='right', verticalalignment='center', transform=ax.transAxes)
 
 	fig = save_plot(fig, settings)
 	return fig
+
+
+
+def add_time_plot_lines(ax, months, revenue, customer_function, line_color, fill_color, settings):
+	net_income = revenue.net(months, customer_function(months, settings))
+	net_income_conservative = revenue.net(months, customer_function(months, settings), estimate_type='conservative')
+	net_income_aggressive = revenue.net(months, customer_function(months, settings), estimate_type='aggressive')
+
+	lines = ax.fill_between(months, net_income_conservative, net_income_aggressive, facecolor=fill_color)
+	line = ax.plot(months, net_income, linestyle='-', color=line_color)
+	return line, lines
+
+
+
+def constant_customers(months, settings):
+	customers = settings.constant_customers_slice
+	return customers
+
+
+
+def linear_customers(months, settings):
+	customers = months * settings.linear_customers_rate
+	return customers
+
+
+
+def exponential_customers(months, settings):
+	customers = np.exp(months**(settings.exponential_customers_month_power) / settings.exponential_customers_folding_time)
+	return customers
 
 
 
