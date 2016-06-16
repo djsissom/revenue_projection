@@ -133,6 +133,8 @@ class Settings:
 		if type(value) == str:
 			if (value[0] == '"' and value[-1] == '"') or (value[0] == "'" and value[-1] == "'"):
 				value = value[1:-1]
+			elif value[0] == 'r' and ((value[1] == '"' and value[-1] == '"') or (value[1] == "'" and value[-1] == "'")):
+				value = r"%s" % value[2:-1]
 			elif value == 'True' or value == 'true':
 				value = True
 			elif value == 'False' or value == 'false':
@@ -206,26 +208,28 @@ def make_time_plot(revenue, settings):
 	fig, ax = setup_plot(settings)
 
 	months = get_independent_variable(settings)
-	for customer_function, line_color, fill_color in zip([constant_customers, linear_customers, exponential_customers], \
+	for customer_function, line_color, fill_color, label in zip( \
+			[constant_customers, linear_customers, exponential_customers], \
 			[settings.constant_line_color, settings.linear_line_color, settings.exponential_line_color], \
-			[settings.constant_fill_color, settings.linear_fill_color, settings.exponential_fill_color]):
-		line, range_lines = add_time_plot_lines(ax, months, revenue, customer_function, line_color, fill_color, settings)
+			[settings.constant_fill_color, settings.linear_fill_color, settings.exponential_fill_color], \
+			[settings.constant_label, settings.linear_label, settings.exponential_label] \
+			):
+		line, range_lines = add_time_plot_lines(ax, months, revenue, customer_function, line_color, fill_color, label, settings)
+	ax.legend(loc='lower right', fontsize='x-large')
 	set_line_plot_params(ax, settings)
-
-	ax.text(0.95, 0.10, '50,000 Customers', horizontalalignment='right', verticalalignment='center', transform=ax.transAxes)
 
 	fig = save_plot(fig, settings)
 	return fig
 
 
 
-def add_time_plot_lines(ax, months, revenue, customer_function, line_color, fill_color, settings):
+def add_time_plot_lines(ax, months, revenue, customer_function, line_color, fill_color, label, settings):
 	net_income = revenue.net(months, customer_function(months, settings))
 	net_income_conservative = revenue.net(months, customer_function(months, settings), estimate_type='conservative')
 	net_income_aggressive = revenue.net(months, customer_function(months, settings), estimate_type='aggressive')
 
 	lines = ax.fill_between(months, net_income_conservative, net_income_aggressive, facecolor=fill_color)
-	line = ax.plot(months, net_income, linestyle='-', color=line_color)
+	line = ax.plot(months, net_income, linestyle='-', color=line_color, label=label)
 	return line, lines
 
 
