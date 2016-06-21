@@ -48,6 +48,18 @@ class Revenue:
 		del fields
 
 
+	def get_revenue_type(self, months, customers, estimate_type='estimate', revenue_type=None):
+		if revenue_type == 'net':
+			return self.net(months, customers, estimate_type=estimate_type)
+		elif revenue_type == 'income':
+			return self.gross_income(months, customers, estimate_type=estimate_type)
+		elif revenue_type == 'expenses':
+			return self.expenses(months, customers, estimate_type=estimate_type)
+		else:
+			print('Please provide a revenue type of "net", "income", or "expenses" in the settings section.')
+			sys.exit(704198)
+
+
 	def net(self, months, customers, estimate_type='estimate'):
 		net = self.gross_income(months, customers, estimate_type) - self.expenses(months, customers, estimate_type)
 		return net
@@ -110,10 +122,20 @@ class Settings:
 	def __init__(self, config_file):
 		config = configparser.ConfigParser()
 		config.read(config_file)
+
 		self.data_settings = self.get_section_settings(config, 'data')
-		self.time_plot_settings = self.get_section_settings(config, 'time_plot')
-		self.customer_plot_settings = self.get_section_settings(config, 'customer_plot')
-		self.customer_time_plot_settings = self.get_section_settings(config, 'customer_time_plot')
+
+		self.time_net_plot_settings      = self.get_section_settings(config, 'time_net_plot')
+		self.time_income_plot_settings   = self.get_section_settings(config, 'time_income_plot')
+		self.time_expenses_plot_settings = self.get_section_settings(config, 'time_expenses_plot')
+
+		self.customer_net_plot_settings      = self.get_section_settings(config, 'customer_net_plot')
+		self.customer_income_plot_settings   = self.get_section_settings(config, 'customer_income_plot')
+		self.customer_expenses_plot_settings = self.get_section_settings(config, 'customer_expenses_plot')
+
+		self.customer_time_net_plot_settings      = self.get_section_settings(config, 'customer_time_net_plot')
+		self.customer_time_income_plot_settings   = self.get_section_settings(config, 'customer_time_income_plot')
+		self.customer_time_expenses_plot_settings = self.get_section_settings(config, 'customer_time_expenses_plot')
 
 
 	def get_section_settings(self, config, section):
@@ -195,12 +217,26 @@ def read_files(files, header_line=None, comment_char='#', rec_array=False, field
 
 
 def make_plots(revenue, settings):
-	if settings.time_plot_settings.make_plot:
-		fig = make_time_plot(revenue, settings.time_plot_settings)
-	if settings.customer_plot_settings.make_plot:
-		fig = make_customer_plot(revenue, settings.customer_plot_settings)
-	if settings.customer_time_plot_settings.make_plot:
-		fig = make_customer_time_plot(revenue, settings.customer_time_plot_settings)
+	if settings.time_net_plot_settings.make_plot:
+		fig = make_time_plot(revenue, settings.time_net_plot_settings)
+	if settings.time_income_plot_settings.make_plot:
+		fig = make_time_plot(revenue, settings.time_income_plot_settings)
+	if settings.time_expenses_plot_settings.make_plot:
+		fig = make_time_plot(revenue, settings.time_expenses_plot_settings)
+
+	if settings.customer_net_plot_settings.make_plot:
+		fig = make_customer_plot(revenue, settings.customer_net_plot_settings)
+	if settings.customer_income_plot_settings.make_plot:
+		fig = make_customer_plot(revenue, settings.customer_income_plot_settings)
+	if settings.customer_expenses_plot_settings.make_plot:
+		fig = make_customer_plot(revenue, settings.customer_expenses_plot_settings)
+
+	if settings.customer_time_net_plot_settings.make_plot:
+		fig = make_customer_time_plot(revenue, settings.customer_time_net_plot_settings)
+	if settings.customer_time_income_plot_settings.make_plot:
+		fig = make_customer_time_plot(revenue, settings.customer_time_income_plot_settings)
+	if settings.customer_time_expenses_plot_settings.make_plot:
+		fig = make_customer_time_plot(revenue, settings.customer_time_expenses_plot_settings)
 
 
 
@@ -224,12 +260,27 @@ def make_time_plot(revenue, settings):
 
 
 def add_time_plot_lines(ax, months, revenue, customer_function, line_color, fill_color, label, settings):
-	net_income = revenue.net(months, customer_function(months, settings))
-	net_income_conservative = revenue.net(months, customer_function(months, settings), estimate_type='conservative')
-	net_income_aggressive = revenue.net(months, customer_function(months, settings), estimate_type='aggressive')
+	revenue_estimate = revenue.get_revenue_type( \
+			months, \
+			customer_function(months, settings), \
+			estimate_type='estimate', \
+			revenue_type=settings.revenue_type \
+			)
+	revenue_conservative = revenue.get_revenue_type( \
+			months, \
+			customer_function(months, settings), \
+			estimate_type='conservative', \
+			revenue_type=settings.revenue_type \
+			)
+	revenue_aggressive = revenue.get_revenue_type( \
+			months, \
+			customer_function(months, settings), \
+			estimate_type='aggressive', \
+			revenue_type=settings.revenue_type \
+			)
 
-	lines = ax.fill_between(months, net_income_conservative, net_income_aggressive, facecolor=fill_color, alpha=settings.transparency_alpha)
-	line = ax.plot(months, net_income, linestyle='-', color=line_color, label=label)
+	lines = ax.fill_between(months, revenue_conservative, revenue_aggressive, facecolor=fill_color, alpha=settings.transparency_alpha)
+	line = ax.plot(months, revenue_estimate, linestyle='-', color=line_color, label=label)
 	return line, lines
 
 
@@ -256,12 +307,26 @@ def make_customer_plot(revenue, settings):
 	fig, ax = setup_plot(settings)
 
 	customers = get_independent_variable(settings)
-	net_income = revenue.net(settings.time_slice, customers)
-	net_income_conservative = revenue.net(settings.time_slice, customers, estimate_type='conservative')
-	net_income_aggressive = revenue.net(settings.time_slice, customers, estimate_type='aggressive')
+	revenue_estimate = revenue.get_revenue_type( \
+			settings.time_slice, \
+			customers, estimate_type='estimate', \
+			revenue_type=settings.revenue_type \
+			)
+	revenue_conservative = revenue.get_revenue_type( \
+			settings.time_slice, \
+			customers, \
+			estimate_type='conservative', \
+			revenue_type=settings.revenue_type \
+			)
+	revenue_aggressive = revenue.get_revenue_type( \
+			settings.time_slice, \
+			customers, \
+			estimate_type='aggressive', \
+			revenue_type=settings.revenue_type \
+			)
 
-	lines = ax.fill_between(customers, net_income_conservative, net_income_aggressive, facecolor=settings.fill_color, alpha=settings.transparency_alpha)
-	line = ax.plot(customers, net_income, linestyle='-')
+	lines = ax.fill_between(customers, revenue_conservative, revenue_aggressive, facecolor=settings.fill_color, alpha=settings.transparency_alpha)
+	line = ax.plot(customers, revenue_estimate, linestyle='-')
 	set_line_plot_params(ax, settings)
 
 	fig = save_plot(fig, settings)
@@ -271,7 +336,7 @@ def make_customer_plot(revenue, settings):
 
 def make_customer_time_plot(revenue, settings):
 	fig, ax = setup_plot(settings)
-	fig = save_plot(fig, plot_name)
+	fig = save_plot(fig, settings)
 	return fig
 
 
