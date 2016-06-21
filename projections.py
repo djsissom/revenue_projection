@@ -279,8 +279,16 @@ def add_time_plot_lines(ax, months, revenue, customer_function, line_color, fill
 			revenue_type=settings.revenue_type \
 			)
 
-	lines = ax.fill_between(months, revenue_conservative, revenue_aggressive, facecolor=fill_color, alpha=settings.transparency_alpha)
-	line = ax.plot(months, revenue_estimate, linestyle='-', color=line_color, label=label)
+	lines = ax.fill_between(months, revenue_conservative, revenue_aggressive, \
+			color=line_color, \
+			facecolor=fill_color, \
+			alpha=settings.transparency_alpha, \
+			label=label \
+			)
+	line = ax.plot(months, revenue_estimate, \
+			linestyle='-', \
+			color=line_color \
+			)
 	return line, lines
 
 
